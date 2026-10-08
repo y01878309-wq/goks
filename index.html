@@ -1,28 +1,227 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>واتساب ويب - WhatsApp Web</title>
-    <meta name="description" content="تطبيق محادثات فوري متكامل بتصميم وتجربة واتساب الأصلية، يدعم الرسائل النصية والصوتية والوسائط والحالات والمكالمات مع دعم كامل للغتين العربية والإنجليزية." />
-    <meta name="theme-color" content="#111b21" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="واتساب" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <meta property="og:title" content="واتساب ويب - WhatsApp Web" />
-    <meta property="og:description" content="تطبيق محادثات فوري متكامل بتصميم وتجربة واتساب الأصلية، يدعم الرسائل النصية والصوتية والوسائط والحالات والمكالمات مع دعم كامل للغتين العربية والإنجليزية." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-[#111b21] antialiased select-none overflow-hidden">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واتساب - goks</title>
+    <!-- استدعاء أيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
+        body {
+            background-color: #111b21;
+            color: #e9edef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .whatsapp-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            background-color: #111b21;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* شريط العنوان العلوي */
+        .header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #111b21;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: bold;
+            color: #e9edef;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 20px;
+            color: #aebac1;
+            font-size: 18px;
+            align-items: center;
+        }
+
+        /* شريط البحث أو Meta AI */
+        .search-container {
+            padding: 0 16px 8px 16px;
+        }
+
+        .search-box {
+            background-color: #202c33;
+            border-radius: 24px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #8696a0;
+            font-size: 14px;
+        }
+
+        .search-box i {
+            font-size: 16px;
+        }
+
+        /* قائمة الأرشيف */
+        .archived-section {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 16px;
+            color: #e9edef;
+            font-size: 14px;
+        }
+
+        .archived-section i {
+            color: #00a884;
+            font-size: 16px;
+            margin-right: 4px;
+        }
+
+        /* قائمة الدردشات (فارغة ومجهزة لإضافة محادثاتك) */
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* الأزرار العائمة على الجانب */
+        .floating-buttons {
+            position: absolute;
+            bottom: 75px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .fab-small {
+            width: 40px;
+            height: 40px;
+            background-color: #202c33;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #aebac1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .fab-main {
+            width: 50px;
+            height: 50px;
+            background-color: #00a884;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #111b21;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        /* شريط التنقل السفلي */
+        .footer-nav {
+            height: 60px;
+            background-color: #111b21;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #222d34;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #8696a0;
+            font-size: 11px;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: #00a884;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="whatsapp-container">
+        <!-- رأس التطبيق -->
+        <div class="header">
+            <h1>واتساب</h1>
+            <div class="header-icons">
+                <i class="fa-solid fa-camera"></i>
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </div>
+        </div>
+
+        <!-- خانة البحث -->
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>اسأل Meta AI أو ابحث</span>
+            </div>
+        </div>
+
+        <!-- الأرشيف -->
+        <div class="archived-section">
+            <i class="fa-solid fa-box-archive"></i>
+            <span>مؤرشفة</span>
+        </div>
+
+        <!-- قائمة المحادثات (فارغة وجاهزة) -->
+        <div class="chat-list">
+            <!-- يمكنك إضافة الدردشات هنا لاحقاً -->
+        </div>
+
+        <!-- الأزرار العائمة على الجانب -->
+        <div class="floating-buttons">
+            <div class="fab-small"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div class="fab-main"><i class="fa-solid fa-plus"></i></div>
+        </div>
+
+        <!-- شريط التنقل السفلي -->
+        <div class="footer-nav">
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-phone"></i>
+                <span>المكالمات</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>المجتمعات</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-circle-notch"></i>
+                <span>التحديثات</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fa-solid fa-comment-dots"></i>
+                <span>الدردشات</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
