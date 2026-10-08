@@ -1,227 +1,781 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>واتساب - goks</title>
-    <!-- استدعاء أيقونات FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  MessageSquare, Users, Settings, Shield, Wifi, WifiOff, Phone, Video, 
+  Search, MoreVertical, Send, Check, CheckCheck, Download, Eye, EyeOff, 
+  Lock, Smartphone, Globe, Palette, Bell, HelpCircle, RefreshCw, 
+  Copy, Trash2, ArrowRight, UserPlus, Sparkles, X, Plus, Radio, Image as ImageIcon, FileText, CheckCircle2
+} from 'lucide-react';
 
-        body {
-            background-color: #111b21;
-            color: #e9edef;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+export default function App() {
+  // Authentication & Navigation State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [enteredOtp, setEnteredOtp] = useState('');
+  const [activeTab, setActiveTab] = useState('chats'); // 'chats', 'status', 'gold', 'settings'
+  
+  // App Features State
+  const [isInternetDisconnected, setIsInternetDisconnected] = useState(false);
+  const [accounts, setAccounts] = useState([
+    { id: 1, name: 'يوسف فرج', phone: '+20 1012345678', active: true, avatar: 'https://placehold.co/150/059669/ffffff?text=Y' }
+  ]);
+  const [activeAccount, setActiveAccount] = useState(1);
+  
+  // Gold Settings & Privacy
+  const [goldSettings, setGoldSettings] = useState({
+    hideLastSeen: true,
+    hideBlueTicks: true,
+    hideTyping: true,
+    antiDeleteMessage: true,
+    antiDeleteStatus: true,
+    anonymousStatusView: true,
+    extendedStatusDuration: true, // 1 hour status duration mode
+    highQualityImages: true,
+    unlimitedImageShare: true,
+    maxVideoSize: '700MB',
+    emojiStyle: 'apple', // 'apple', 'android', 'facebook'
+    themeColor: 'emerald', // 'emerald', 'gold', 'indigo', 'dark'
+    fontStyle: 'Inter'
+  });
 
-        .whatsapp-container {
-            width: 100%;
-            max-width: 480px;
-            height: 100%;
-            background-color: #111b21;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+  // Chats Data
+  const [chats, setChats] = useState([
+    { 
+      id: 1, 
+      name: 'أحمد محمد', 
+      phone: '+201112223344', 
+      avatar: 'https://placehold.co/100/3b82f6/ffffff?text=أ', 
+      lastMessage: 'السلام عليكم يا باشمهندس، الكود شغال تمام؟', 
+      time: '03:10 م', 
+      unread: 2, 
+      online: true, 
+      typing: true, 
+      archived: false,
+      pinned: true,
+      messages: [
+        { id: 1, sender: 'them', text: 'أهلاً بك يا يوسف', time: '02:00 م' },
+        { id: 2, sender: 'me', text: 'وعليكم السلام، كله تمام وزي الفل', time: '02:05 م' },
+        { id: 3, sender: 'them', text: 'السلام عليكم يا باشمهندس، الكود شغال تمام؟', time: '03:10 م' }
+      ]
+    },
+    { 
+      id: 2, 
+      name: 'مجموعة المطورين (Goks)', 
+      phone: 'Group', 
+      avatar: 'https://placehold.co/100/10b981/ffffff?text=G', 
+      lastMessage: 'محمد: تم رفع النسخة الذهبية الجديدة بنجاح 🚀', 
+      time: 'أمس', 
+      unread: 0, 
+      online: false, 
+      typing: false, 
+      archived: false,
+      pinned: true,
+      messages: [
+        { id: 1, sender: 'them', text: 'شباب، حد خلص الواجهة الرئيسية؟', time: 'أمس' },
+        { id: 2, sender: 'me', text: 'أيوة، شغالين عليها حالياً', time: 'أمس' },
+        { id: 3, sender: 'them', text: 'تم رفع النسخة الذهبية الجديدة بنجاح 🚀', time: 'أمس' }
+      ]
+    },
+    { 
+      id: 3, 
+      name: 'محمود علي', 
+      phone: '+201223334455', 
+      avatar: 'https://placehold.co/100/f59e0b/ffffff?text=م', 
+      lastMessage: 'تمام يا غالي، كلمني لما تخلص', 
+      time: 'الثلاثاء', 
+      unread: 0, 
+      online: true, 
+      typing: false, 
+      archived: true,
+      pinned: false,
+      messages: [
+        { id: 1, sender: 'them', text: 'جاهز للمقابلة بكره؟', time: 'الثلاثاء' },
+        { id: 2, sender: 'me', text: 'إن شاء الله جاهز تماماً', time: 'الثلاثاء' },
+        { id: 3, sender: 'them', text: 'تمام يا غالي، كلمني لما تخلص', time: 'الثلاثاء' }
+      ]
+    }
+  ]);
 
-        /* شريط العنوان العلوي */
-        .header {
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #111b21;
-        }
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [messageInput, setMessageInput] = useState('');
+  
+  // Status List
+  const [statuses, setStatuses] = useState([
+    { id: 1, name: 'أحمد محمد', time: 'منذ 15 دقيقة', image: 'https://placehold.co/400x700/1e293b/f8fafc?text=Status+1+(1+Hour+Mode)', viewed: false },
+    { id: 2, name: 'محمود علي', time: 'منذ ساعتين', image: 'https://placehold.co/400x700/0f172a/cbd5e1?text=Status+2+(Golden+Theme)', viewed: true }
+  ]);
+  const [viewingStatus, setViewingStatus] = useState(null);
 
-        .header h1 {
-            font-size: 22px;
-            font-weight: bold;
-            color: #e9edef;
-        }
+  // Message Spammer Tool State
+  const [spammerOpen, setSpammerOpen] = useState(false);
+  const [spamText, setSpamText] = useState('');
+  const [spamCount, setSpamCount] = useState(10);
+  const [spamTargetPhone, setSpamTargetPhone] = useState('');
 
-        .header-icons {
-            display: flex;
-            gap: 20px;
-            color: #aebac1;
-            font-size: 18px;
-            align-items: center;
-        }
+  // Toast message notification
+  const [toastMessage, setToastMessage] = useState('');
 
-        /* شريط البحث أو Meta AI */
-        .search-container {
-            padding: 0 16px 8px 16px;
-        }
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
 
-        .search-box {
-            background-color: #202c33;
-            border-radius: 24px;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #8696a0;
-            font-size: 14px;
-        }
-
-        .search-box i {
-            font-size: 16px;
-        }
-
-        /* قائمة الأرشيف */
-        .archived-section {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            gap: 16px;
-            color: #e9edef;
-            font-size: 14px;
-        }
-
-        .archived-section i {
-            color: #00a884;
-            font-size: 16px;
-            margin-right: 4px;
-        }
-
-        /* قائمة الدردشات (فارغة ومجهزة لإضافة محادثاتك) */
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        /* الأزرار العائمة على الجانب */
-        .floating-buttons {
-            position: absolute;
-            bottom: 75px;
-            left: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .fab-small {
-            width: 40px;
-            height: 40px;
-            background-color: #202c33;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #aebac1;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        .fab-main {
-            width: 50px;
-            height: 50px;
-            background-color: #00a884;
-            border-radius: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #111b21;
-            font-size: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        /* شريط التنقل السفلي */
-        .footer-nav {
-            height: 60px;
-            background-color: #111b21;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid #222d34;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: #8696a0;
-            font-size: 11px;
-            text-decoration: none;
-            position: relative;
-        }
-
-        .nav-item.active {
-            color: #00a884;
-        }
-
-        .nav-item i {
-            font-size: 20px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="whatsapp-container">
-        <!-- رأس التطبيق -->
-        <div class="header">
-            <h1>واتساب</h1>
-            <div class="header-icons">
-                <i class="fa-solid fa-camera"></i>
-                <i class="fa-solid fa-ellipsis-vertical"></i>
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-amber-950 text-white flex items-center justify-center p-4 font-sans dir-rtl">
+        <div className="bg-slate-900/90 border border-amber-500/30 p-8 rounded-2xl shadow-2xl w-full max-w-md backdrop-blur-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex p-4 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-400 mb-3 animate-pulse">
+              <Sparkles size={36} />
             </div>
-        </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-yellow-200 bg-clip-text text-transparent">
+              واتساب الذهبي (Goks Gold)
+            </h1>
+            <p className="text-slate-400 text-sm mt-2">تسجيل الدخول برقم الهاتف لتفعيل النسخة الخارقة</p>
+          </div>
 
-        <!-- خانة البحث -->
-        <div class="search-container">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <span>اسأل Meta AI أو ابحث</span>
+          {!otpSent ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">رقم الهاتف المحمول</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 bg-slate-800 border border-slate-700 rounded-r-xl text-slate-300 text-sm">
+                    +20
+                  </span>
+                  <input
+                    type="tel"
+                    placeholder="1012345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full bg-slate-800/80 border border-slate-700 rounded-l-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 text-left dir-ltr"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (phoneNumber.length < 9) {
+                    showToast('الرجاء إدخال رقم هاتف صحيح');
+                    return;
+                  }
+                  const code = Math.floor(1000 + Math.random() * 9000).toString();
+                  setOtpCode(code);
+                  setOtpSent(true);
+                  showToast(`تم إرسال كود التحقق التجريبي: ${code}`);
+                }}
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2"
+              >
+                <span>إرسال كود التحقق (OTP)</span>
+                <ArrowRight size={18} />
+              </button>
             </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-center text-amber-300 text-sm">
+                تم إرسال كود التحقق إلى رقمك. (الكود التجريبي: <span className="font-bold tracking-widest">{otpCode}</span>)
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">أدخل كود التحقق المكون من 4 أرقام</label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  placeholder="----"
+                  value={enteredOtp}
+                  onChange={(e) => setEnteredOtp(e.target.value)}
+                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (enteredOtp === otpCode || enteredOtp === '1234') {
+                    setIsLoggedIn(true);
+                    showToast('تم تسجيل الدخول بنجاح! أهلاً بك في واتساب الذهبي');
+                  } else {
+                    showToast('كود التحقق غير صحيح، جرب 1234');
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 size={18} />
+                <span>تأكيد والدخول للتطبيق</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const activeChat = chats.find(c => c.id === activeChatId);
+
+  const handleSendMessage = () => {
+    if (!messageInput.trim() || !activeChat) return;
+    
+    const updatedChats = chats.map(chat => {
+      if (chat.id === activeChatId) {
+        return {
+          ...chat,
+          lastMessage: messageInput,
+          time: 'الآن',
+          messages: [...chat.messages, { id: Date.now(), sender: 'me', text: messageInput, time: 'الآن' }]
+        };
+      }
+      return chat;
+    });
+
+    setChats(updatedChats);
+    setMessageInput('');
+  };
+
+  const handleSpamSend = () => {
+    if (!spamText || spamCount <= 0) {
+      showToast('أدخل النص وعدد مرات التكرار بشكل صحيح');
+      return;
+    }
+    showToast(`تم إرسال الرسالة ${spamCount} مرة بنجاح للمستهدف!`);
+    setSpammerOpen(false);
+    setSpamText('');
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans select-none overflow-hidden dir-rtl">
+      
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-amber-500 text-slate-950 px-6 py-3 rounded-2xl shadow-2xl font-bold flex items-center gap-3 border border-amber-300 animate-bounce">
+          <Sparkles size={20} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Sidebar / Navigation & Chat List */}
+      <div className={`w-full md:w-96 bg-slate-900 border-l border-slate-800 flex flex-col ${activeChatId && 'hidden md:flex'}`}>
+        
+        {/* Top Header */}
+        <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-bold shadow-md">
+              G
+            </div>
+            <div>
+              <h2 className="font-bold text-amber-400 flex items-center gap-1 text-sm">
+                واتساب الذهبي <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded">v10.5</span>
+              </h2>
+              <p className="text-xs text-slate-400">حساب: {accounts.find(a => a.id === activeAccount)?.name || 'يوسف'}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {/* Wi-Fi Disconnect Toggle (Simulating turning off net for WhatsApp only) */}
+            <button
+              onClick={() => {
+                setIsInternetDisconnected(!isInternetDisconnected);
+                showToast(isInternetDisconnected ? 'تم إعادة اتصال الإنترنت بالواتساب الذهبي' : 'تم قطع الإنترنت عن الواتساب الذهبي فقط (وضع الطيران للواتس)');
+              }}
+              className={`p-2 rounded-xl transition duration-200 ${isInternetDisconnected ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' : 'bg-slate-800 text-emerald-400 hover:bg-slate-700'}`}
+              title="قطع الإنترنت عن الواتس فقط"
+            >
+              {isInternetDisconnected ? <WifiOff size={20} /> : <Wifi size={20} />}
+            </button>
+
+            <button 
+              onClick={() => setSpammerOpen(true)}
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl transition"
+              title="أداة مكرر الرسائل السريع"
+            >
+              <Send size={18} />
+            </button>
+
+            <button 
+              onClick={() => setActiveTab('gold')}
+              className="p-2 bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 rounded-xl transition"
+              title="إضافات الذهبي"
+            >
+              <Shield size={20} />
+            </button>
+          </div>
         </div>
 
-        <!-- الأرشيف -->
-        <div class="archived-section">
-            <i class="fa-solid fa-box-archive"></i>
-            <span>مؤرشفة</span>
+        {/* Global Typing Indicator Banner */}
+        {chats.some(c => c.typing) && !isInternetDisconnected && (
+          <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-1.5 flex items-center gap-2 text-xs text-emerald-400 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>يوجد شخص يكتب الآن في إحدى المحادثات...</span>
+          </div>
+        )}
+
+        {/* Internet Disconnected Banner */}
+        {isInternetDisconnected && (
+          <div className="bg-red-500/20 border-b border-red-500/30 px-4 py-2 flex items-center justify-between text-xs text-red-300">
+            <div className="flex items-center gap-2">
+              <WifiOff size={16} />
+              <span>الإنترنت مفصول عن الواتساب حالياً (Wi-Fi معطل)</span>
+            </div>
+            <button onClick={() => setIsInternetDisconnected(false)} className="underline font-bold">إعادة الاتصال</button>
+          </div>
+        )}
+
+        {/* Navigation Tabs */}
+        <div className="grid grid-cols-4 bg-slate-950 p-1 border-b border-slate-800 text-center text-xs font-medium">
+          <button 
+            onClick={() => setActiveTab('chats')} 
+            className={`py-2 rounded-lg transition ${activeTab === 'chats' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}`}
+          >
+            الدردشات
+          </button>
+          <button 
+            onClick={() => setActiveTab('status')} 
+            className={`py-2 rounded-lg transition ${activeTab === 'status' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}`}
+          >
+            الحالات (ساعة)
+          </button>
+          <button 
+            onClick={() => setActiveTab('gold')} 
+            className={`py-2 rounded-lg transition ${activeTab === 'gold' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}`}
+          >
+            الإضافات
+          </button>
+          <button 
+            onClick={() => setActiveTab('settings')} 
+            className={`py-2 rounded-lg transition ${activeTab === 'settings' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'}`}
+          >
+            الإعدادات
+          </button>
         </div>
 
-        <!-- قائمة المحادثات (فارغة وجاهزة) -->
-        <div class="chat-list">
-            <!-- يمكنك إضافة الدردشات هنا لاحقاً -->
+        {/* Search Bar */}
+        <div className="p-3 bg-slate-900 border-b border-slate-800">
+          <div className="relative">
+            <Search size={16} className="absolute right-3 top-3 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="بحث في المحادثات أو الأرشيف..." 
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
         </div>
 
-        <!-- الأزرار العائمة على الجانب -->
-        <div class="floating-buttons">
-            <div class="fab-small"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-            <div class="fab-main"><i class="fa-solid fa-plus"></i></div>
-        </div>
+        {/* Tab Content: Chats List */}
+        {activeTab === 'chats' && (
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+            {/* Archived Folder Box */}
+            <div 
+              onClick={() => showToast('عرض المحادثات المؤرشفة (مخفية عن الرئيسية)')}
+              className="p-3 bg-slate-800/40 hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl">
+                  <FolderIcon size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">الدردشات المؤرشفة</h4>
+                  <p className="text-xs text-slate-400"> تبقى مؤرشفة في حال وصول رسائل جديدة</p>
+                </div>
+              </div>
+              <span className="text-xs bg-amber-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">1</span>
+            </div>
 
-        <!-- شريط التنقل السفلي -->
-        <div class="footer-nav">
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-phone"></i>
-                <span>المكالمات</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-users"></i>
-                <span>المجتمعات</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-circle-notch"></i>
-                <span>التحديثات</span>
-            </a>
-            <a href="#" class="nav-item active">
-                <i class="fa-solid fa-comment-dots"></i>
-                <span>الدردشات</span>
-            </a>
+            {/* Chat Items */}
+            {chats.map(chat => (
+              <div 
+                key={chat.id}
+                onClick={() => {
+                  setActiveChatId(chat.id);
+                  // Mark as read
+                  setChats(chats.map(c => c.id === chat.id ? {...c, unread: 0} : c));
+                }}
+                className={`p-3 flex items-center gap-3 cursor-pointer transition hover:bg-slate-800/70 ${activeChatId === chat.id ? 'bg-slate-800 border-r-4 border-amber-500' : ''}`}
+              >
+                <div className="relative">
+                  <img src={chat.avatar} alt={chat.name} className="w-12 h-12 rounded-full object-cover border border-slate-700" />
+                  {chat.online && <span className="absolute bottom-0 left-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-sm text-white truncate">{chat.name}</h3>
+                    <span className="text-xs text-slate-400">{chat.time}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs truncate ${chat.typing ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                      {chat.typing ? 'يكتب الآن...' : chat.lastMessage}
+                    </p>
+                    {chat.unread > 0 && (
+                      <span className="bg-amber-500 text-slate-950 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                        {chat.unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tab Content: Status View */}
+        {activeTab === 'status' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-amber-400 text-sm">حالة الساعات الطويلة (إلى ساعة كاملة)</h4>
+                <p className="text-xs text-slate-300 mt-0.5">يمكنك رفع حالات لمدة تصل إلى 60 دقيقة كاملة ومشاهدتها بدون علم أصحابها وتحميلها للاستوديو.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {statuses.map(st => (
+                <div key={st.id} className="bg-slate-900 border border-slate-800 p-3 rounded-2xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full ring-2 ring-amber-500 p-0.5">
+                      <img src={st.image} alt={st.name} className="w-full h-full rounded-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{st.name}</h4>
+                      <p className="text-xs text-slate-400">{st.time} • (مدة حالة: ساعة)</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setViewingStatus(st)}
+                    className="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 p-2.5 rounded-xl transition flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <Eye size={16} />
+                    <span>مشاهدة وتحميل</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Gold Settings */}
+        {activeTab === 'gold' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+            <div className="bg-gradient-to-r from-amber-600 to-yellow-600 p-4 rounded-2xl text-slate-950 font-bold shadow-lg flex items-center justify-between">
+              <div>
+                <h3 className="text-lg">إضافات الواتساب الذهبي</h3>
+                <p className="text-xs opacity-80 mt-1">التحكم الكامل في الخصوصية والميديا والإضافات الاحترافية</p>
+              </div>
+              <Shield size={32} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white">إخفاء الظهور وآخر ظهور</h4>
+                  <p className="text-xs text-slate-400">لن يرى أحد أنك متصل الآن</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={goldSettings.hideLastSeen} 
+                  onChange={() => setGoldSettings({...goldSettings, hideLastSeen: !goldSettings.hideLastSeen})}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer" 
+                />
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white">منع حذف الرسائل (Anti-Delete)</h4>
+                  <p className="text-xs text-slate-400">الرسالة تظل ظاهرة حتى لو حذفها الطرف الآخر</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={goldSettings.antiDeleteMessage} 
+                  onChange={() => setGoldSettings({...goldSettings, antiDeleteMessage: !goldSettings.antiDeleteMessage})}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer" 
+                />
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white">منع حذف الحالات والستوري</h4>
+                  <p className="text-xs text-slate-400">احتفاظ الحالات الممسوحة تلقائياً</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={goldSettings.antiDeleteStatus} 
+                  onChange={() => setGoldSettings({...goldSettings, antiDeleteStatus: !goldSettings.antiDeleteStatus})}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer" 
+                />
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white">مشاهدة الحالات بصيغة سرية</h4>
+                  <p className="text-xs text-slate-400">شاهد حالة أصدقائك بدون ظهور اسمك عندهم</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={goldSettings.anonymousStatusView} 
+                  onChange={() => setGoldSettings({...goldSettings, anonymousStatusView: !goldSettings.anonymousStatusView})}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer" 
+                />
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white">إرسال صور بجودة أصلية (1MB+)</h4>
+                  <p className="text-xs text-slate-400">بدون أي ضغط للجودة وبلا حدود للصور</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={goldSettings.highQualityImages} 
+                  onChange={() => setGoldSettings({...goldSettings, highQualityImages: !goldSettings.highQualityImages})}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer" 
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Settings */}
+        {activeTab === 'settings' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center gap-4">
+              <img src={accounts.find(a => a.id === activeAccount)?.avatar} alt="Profile" className="w-16 h-16 rounded-full object-cover border-2 border-amber-500" />
+              <div>
+                <h3 className="font-bold text-lg text-white">{accounts.find(a => a.id === activeAccount)?.name}</h3>
+                <p className="text-xs text-slate-400">{accounts.find(a => a.id === activeAccount)?.phone}</p>
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">متصل ومحمي بالذهبي</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div 
+                onClick={() => showToast('إدارة الحسابات المتعددة (حتى 5 أرقام مفعلة)')}
+                className="bg-slate-900 hover:bg-slate-800 p-3 rounded-xl flex items-center justify-between cursor-pointer transition border border-slate-800"
+              >
+                <div className="flex items-center gap-3">
+                  <Smartphone className="text-amber-400" size={20} />
+                  <span>إدارة حسابات متعددة (حتى 5 أرقام)</span>
+                </div>
+                <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">مفعل</span>
+              </div>
+
+              <div 
+                onClick={() => showToast('متجر الثيمات المجانية (آيفون، أندرويد) يعمل بكفاءة')}
+                className="bg-slate-900 hover:bg-slate-800 p-3 rounded-xl flex items-center justify-between cursor-pointer transition border border-slate-800"
+              >
+                <div className="flex items-center gap-3">
+                  <Palette className="text-amber-400" size={20} />
+                  <span>متجر الثيمات (آيفون وأندرويد مجاناً)</span>
+                </div>
+                <span className="text-xs text-slate-400">تصفح</span>
+              </div>
+
+              <div 
+                onClick={() => showToast('لغة التطبيق مستقلة تماماً عن لغة الجهاز')}
+                className="bg-slate-900 hover:bg-slate-800 p-3 rounded-xl flex items-center justify-between cursor-pointer transition border border-slate-800"
+              >
+                <div className="flex items-center gap-3">
+                  <Globe className="text-amber-400" size={20} />
+                  <span>لغة التطبيق (العربية)</span>
+                </div>
+                <span className="text-xs text-slate-400">تغيير</span>
+              </div>
+
+              <div 
+                onClick={() => {
+                  setIsLoggedIn(false);
+                  setOtpSent(false);
+                  setEnteredOtp('');
+                  showToast('تم تسجيل الخروج بنجاح');
+                }}
+                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-3 rounded-xl flex items-center justify-between cursor-pointer transition border border-red-500/30"
+              >
+                <div className="flex items-center gap-3">
+                  <Trash2 size={20} />
+                  <span>تسجيل الخروج وحذف الجلسة</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Main Chat Conversation Area */}
+      <div className={`flex-1 flex flex-col bg-slate-900 ${!activeChatId && 'hidden md:flex'}`}>
+        {activeChat ? (
+          <>
+            {/* Chat Top Header */}
+            <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setActiveChatId(null)}
+                  className="md:hidden p-2 text-slate-400 hover:text-white"
+                >
+                  <ArrowRight size={20} />
+                </button>
+                <img src={activeChat.avatar} alt={activeChat.name} className="w-10 h-10 rounded-full object-cover border border-slate-700" />
+                <div>
+                  <h3 className="font-bold text-sm text-white">{activeChat.name}</h3>
+                  <p className="text-xs text-emerald-400">
+                    {activeChat.typing ? 'يكتب رد الآن...' : (activeChat.online ? 'متصل الآن' : 'آخر ظهور مؤخرًا')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-slate-300">
+                <button onClick={() => showToast('جاري بدء مكالمة صوتية مشفرة...')} className="p-2 hover:bg-slate-800 rounded-xl transition">
+                  <Phone size={18} />
+                </button>
+                <button onClick={() => showToast('جاري بدء مكالمة فيديو عالية الجودة...')} className="p-2 hover:bg-slate-800 rounded-xl transition">
+                  <Video size={18} />
+                </button>
+                <button onClick={() => showToast('خيارات الدردشة المتقدمة (إخفاء المحادثة، قفل بكلمة مرور)')} className="p-2 hover:bg-slate-800 rounded-xl transition">
+                  <MoreVertical size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Messages Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-950 to-slate-900">
+              <div className="text-center my-2">
+                <span className="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
+                  🔒 الرسائل والمكالمات مشفرة تماماً بنظام واتساب الذهبي الآمن
+                </span>
+              </div>
+
+              {activeChat.messages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-xs md:max-w-md p-3 rounded-2xl shadow-md text-sm ${msg.sender === 'me' ? 'bg-amber-600 text-slate-950 rounded-br-none font-medium' : 'bg-slate-800 text-white rounded-bl-none border border-slate-700'}`}>
+                    <p>{msg.text}</p>
+                    <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${msg.sender === 'me' ? 'text-slate-900/70' : 'text-slate-400'}`}>
+                      <span>{msg.time}</span>
+                      {msg.sender === 'me' && <CheckCheck size={14} className="text-amber-950" />}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Message Input Footer */}
+            <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2">
+              <button onClick={() => showToast('إرسال صور بجودة أصلية مفعل')} className="p-2.5 text-amber-400 hover:bg-slate-800 rounded-xl transition" title="إرسال صور وميديا بلا حدود">
+                <ImageIcon size={20} />
+              </button>
+              <input 
+                type="text" 
+                placeholder={isInternetDisconnected ? "الإنترنت مفصول - لا يمكن الإرسال" : "اكتب رسالة..."}
+                disabled={isInternetDisconnected}
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 disabled:opacity-50"
+              />
+              <button 
+                onClick={handleSendMessage}
+                disabled={isInternetDisconnected || !messageInput.trim()}
+                className="p-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition shadow disabled:opacity-50"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center">
+            <div className="p-6 bg-slate-800/50 rounded-full border border-slate-700 text-amber-400 mb-4">
+              <MessageSquare size={48} />
+            </div>
+            <h2 className="text-xl font-bold text-slate-300">أهلاً بك في واتساب الذهبي Goks</h2>
+            <p className="text-sm text-slate-400 mt-2 max-w-sm">اختر محادثة من القائمة الجانبية أو ابدأ محادثة جديدة واستمتع بالمميزات الخارقة.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Status Viewer Modal */}
+      {viewingStatus && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="relative max-w-md w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-700">
+            <div className="p-3 bg-slate-800 flex items-center justify-between">
+              <span className="font-bold text-sm text-white">{viewingStatus.name} • (حالة ساعة كاملة)</span>
+              <button onClick={() => setViewingStatus(null)} className="p-1 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 flex flex-col items-center">
+              <img src={viewingStatus.image} alt="Status" className="w-full h-80 object-cover rounded-xl mb-4 border border-slate-800" />
+              <button 
+                onClick={() => showToast('تم حفظ الحالة بنجاح في الاستوديو!')}
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow"
+              >
+                <Download size={18} />
+                <span>تحميل الحالة للاستوديو</span>
+              </button>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Message Spammer Modal */}
+      {spammerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-amber-400 text-lg flex items-center gap-2">
+                <Send size={20} />
+                <span>أداة مكرر الرسائل السريع (Spammer)</span>
+              </h3>
+              <button onClick={() => setSpammerOpen(false)} className="text-slate-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <label className="block text-slate-300 mb-1">الرقم المستهدف / اسم جهة الاتصال</label>
+                <input 
+                  type="text" 
+                  placeholder="أدخل الرقم أو اختر..." 
+                  value={spamTargetPhone}
+                  onChange={(e) => setSpamTargetPhone(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1">النص أو الكلمة المراد تكرارها</label>
+                <textarea 
+                  rows={2}
+                  placeholder="اكتب الجملة هنا..."
+                  value={spamText}
+                  onChange={(e) => setSpamText(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-amber-500"
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1">عدد مرات التكرار ({spamCount})</label>
+                <input 
+                  type="range" 
+                  min={1} 
+                  max={100} 
+                  value={spamCount}
+                  onChange={(e) => setSpamCount(Number(e.target.value))}
+                  className="w-full accent-amber-500 cursor-pointer"
+                />
+              </div>
+
+              <button 
+                onClick={handleSpamSend}
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition"
+              >
+                إرسال مكرر الآن ({spamCount} رسالة)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
+  );
+}
 
-</body>
-</html>
+// Helper icon component
+function FolderIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+  );
+}
