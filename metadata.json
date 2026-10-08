@@ -1,0 +1,6 @@
+{
+  "name": "واتساب ويب - WhatsApp Web",
+  "description": "تطبيق محادثات فوري متكامل بتصميم وتجربة واتساب الأصلية، يدعم الرسائل النصية والصوتية والوسائط والحالات والمكالمات مع دعم كامل للغتين العربية والإنجليزية.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
