@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare, Users, Settings, Shield, Wifi, WifiOff, Phone, Video, Search, 
   MoreVertical, Send, Check, CheckCheck, Download, Eye, EyeOff, Lock, Smartphone, 
-  Tab, SmartphoneTab, Globe, Palette, Bell, HelpCircle, RefreshCw, Copy, Trash2, 
-  ArrowRight, UserPlus, Sparkles, X, Plus, Radio, Image as ImageIcon, FileText, 
-  CheckCircle2 
+  Globe, Palette, Bell, HelpCircle, RefreshCw, Copy, Trash2, ArrowRight, UserPlus, 
+  Sparkles, X, Plus, Radio, Image as ImageIcon, FileText, CheckCircle2, Mic, 
+  Smile, Paperclip, ChevronRight, Moon, Sun, Volume2, VideoOff, ShieldAlert,
+  Flame, Zap, Award, Key, Terminal, Database, Cpu, Layers
 } from 'lucide-react';
 
 export default function App() {
@@ -15,12 +16,16 @@ export default function App() {
   const [enteredOtp, setEnteredOtp] = useState('');
   const [activeTab, setActiveTab] = useState('chats');
   const [isInternetDisconnected, setIsInternetDisconnected] = useState(false);
-  const [accounts, setAccounts] = useState([
-    { id: 1, name: 'يوسف فرج (الرئيسي)', phone: '+201012345678', active: true, avatar: 'https://placeholder.co/150/059669/ffffff?text=Y' }
-  ]);
-  const [activeAccount, setActiveAccount] = useState(1);
   
-  // إعدادات الذهبي
+  // Multi-account system (up to 5 numbers)
+  const [accounts, setAccounts] = useState([
+    { id: 1, name: 'يوسف فرج (الرئيسي)', phone: '+201012345678', active: true, avatar: 'https://placeholder.co/150/d97706/ffffff?text=Y' },
+    { id: 2, name: 'واتساب الأعمال الذهبي', phone: '+201122334455', active: false, avatar: 'https://placeholder.co/150/059669/ffffff?text=B' }
+  ]);
+  const [activeAccountId, setActiveAccountId] = useState(1);
+  const [accountSwitcherOpen, setAccountSwitcherOpen] = useState(false);
+
+  // Gold Advanced Settings
   const [goldSettings, setGoldSettings] = useState({
     hideLastSeen: true,
     hideBlueTicks: true,
@@ -28,192 +33,362 @@ export default function App() {
     antiDeleteMessage: true,
     antiDeleteStatus: true,
     anonymousStatusView: true,
-    extendedStatusDuration: true, // وضع الحالة ساعة واحدة
+    extendedStatusDuration: true, // 1-Hour Status Mode
     highQualityImages: true,
     unlimitedImageShare: true,
-    maxVideoSize: '700MB',
-    emojiStyle: 'apple', // 'apple', 'android', 'facebook'
-    themeColor: 'emerald', // 'emerald', 'gold', 'indigo', 'dark'
-    fontStyle: 'Inter'
+    maxVideoSize: '1GB',
+    emojiStyle: 'apple', 
+    themeColor: 'gold', // 'gold', 'emerald', 'indigo', 'cyberpunk'
+    fontStyle: 'Inter',
+    appLockEnabled: false,
+    appLockPin: '1234',
+    customWallpaper: 'default'
   });
 
+  // Chats State
   const [chats, setChats] = useState([
-    { id: 1, name: 'أحمد محمد', phone: '+201112223344', avatar: 'https://placeholder.co/100/3b82f6/ffffff?text=A', lastMessage: 'السلام عليكم يا باشمهندس.. أخبار الشغل تمام؟', time: '03:10 م', unread: 2, online: true, typing: false },
-    { id: 2, name: 'محمود علي', phone: '+201223334455', avatar: 'https://placeholder.co/100/f59e0b/ffffff?text=M', lastMessage: 'تمام يا غالي، كلمني لما تكون فاضي.', time: 'أمس', unread: 0, online: false, typing: false },
+    { 
+      id: 1, 
+      name: 'أحمد محمد (مهندس البرمجيات)', 
+      phone: '+201112223344', 
+      avatar: 'https://placeholder.co/100/3b82f6/ffffff?text=A', 
+      lastMessage: 'السلام عليكم يا باشمهندس.. تم إنجاز نظام الحماية بنجاح!', 
+      time: '03:10 م', 
+      unread: 2, 
+      online: true, 
+      typing: false,
+      pinned: true,
+      muted: false
+    },
+    { 
+      id: 2, 
+      name: 'محمود علي (فريق التطوير)', 
+      phone: '+201223334455', 
+      avatar: 'https://placeholder.co/100/f59e0b/ffffff?text=M', 
+      lastMessage: 'تمام يا غالي، الكود يعمل بكفاءة تامة بدون أي مشاكل.', 
+      time: 'أمس', 
+      unread: 0, 
+      online: false, 
+      typing: false,
+      pinned: false,
+      muted: true
+    },
+    { 
+      id: 3, 
+      name: 'مجموعة المطورين العرب', 
+      phone: '+201099887766', 
+      avatar: 'https://placeholder.co/100/8b5cf6/ffffff?text=DEV', 
+      lastMessage: 'من سيقوم بمراجعة السيرفرات اليوم؟', 
+      time: 'الثلاثاء', 
+      unread: 5, 
+      online: true, 
+      typing: true,
+      pinned: false,
+      muted: false,
+      isGroup: true
+    }
   ]);
 
-  const [activeChatId, setActiveChatId] = useState(null);
+  const [activeChatId, setActiveChatId] = useState(1);
+  const [messages, setMessages] = useState({
+    1: [
+      { id: 101, sender: 'them', text: 'السلام عليكم يا باشمهندس يوسف، هل النسخة جاهزة؟', time: '03:00 م', status: 'read' },
+      { id: 102, sender: 'me', text: 'وعليكم السلام يا أحمد، جاري العمل على ميزات الـ 3000 سطر البرمجية.', time: '03:05 م', status: 'read' },
+      { id: 103, sender: 'them', text: 'السلام عليكم يا باشمهندس.. تم إنجاز نظام الحماية بنجاح!', time: '03:10 م', status: 'delivered' }
+    ],
+    2: [
+      { id: 201, sender: 'them', text: 'تمام يا غالي، الكود يعمل بكفاءة تامة بدون أي مشاكل.', time: 'أمس', status: 'read' }
+    ],
+    3: [
+      { id: 301, sender: 'them', text: 'مرحباً بالجميع في مجموعة المطورين!', time: 'الثلاثاء', status: 'read' }
+    ]
+  });
+
   const [messageInput, setMessageInput] = useState('');
   
+  // Statuses (1-Hour Mode)
   const [statuses, setStatuses] = useState([
-    { id: 1, name: 'أحمد محمد', time: 'منذ 15 دقيقة', image: 'https://placeholder.co/400x700/1e293b/1e293b?text=Status+1+(1-Hour+Mode)', viewed: false },
-    { id: 2, name: 'محمود علي', time: 'منذ ساعتين', image: 'https://placeholder.co/400x700/0f172a/cbd5e1?text=Status+2+(Golden+Theme)', viewed: false },
+    { id: 1, name: 'أحمد محمد', time: 'منذ 15 دقيقة (حالة ساعة)', image: 'https://placeholder.co/400x700/1e293b/38bdf8?text=Status+1+Ahmed', viewed: false },
+    { id: 2, name: 'محمود علي', time: 'منذ ساعة (حالة ساعة)', image: 'https://placeholder.co/400x700/0f172a/f59e0b?text=Status+2+Mahmoud', viewed: false },
   ]);
 
   const [viewingStatus, setViewingStatus] = useState(null);
+  
+  // Tools Modals
   const [spammerOpen, setSpammerOpen] = useState(false);
   const [spamText, setSpamText] = useState('');
-  const [spamCount, setSpamCount] = useState(10);
-  const [spamTargetPhone, setSpamTargetPhone] = useState('');
+  const [spamCount, setSpamCount] = useState(15);
+  
+  // Call State
+  const [activeCall, setActiveCall] = useState(null); // 'audio' or 'video' or null
+  const [callDuration, setCallDuration] = useState(0);
+
+  // Toast State
   const [toastMessage, setToastMessage] = useState('');
 
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  useEffect(() => {
+    let timer;
+    if (activeCall) {
+      timer = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setCallDuration(0);
+    }
+    return () => clearInterval(timer);
+  }, [activeCall]);
+
+  const handleSendMessage = () => {
+    if (!messageInput.trim()) return;
+    const newMsg = {
+      id: Date.now(),
+      sender: 'me',
+      text: messageInput,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: goldSettings.hideBlueTicks ? 'sent' : 'read'
+    };
+
+    setMessages(prev => ({
+      ...prev,
+      [activeChatId]: [...(prev[activeChatId] || []), newMsg]
+    }));
+
+    // Update last message in chat list
+    setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, lastMessage: messageInput, time: 'الآن' } : c));
+    setMessageInput('');
   };
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 font-sans">
-        <div className="bg-slate-900 border border-amber-500/30 p-8 rounded-2xl shadow-2xl w-full max-w-md text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
-          <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/20 shadow-inner">
-            <Sparkles className="w-10 h-10 text-amber-400" />
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 font-sans select-none">
+        <div className="bg-slate-900 border border-amber-500/40 p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600"></div>
+          
+          <div className="w-24 h-24 bg-gradient-to-tr from-amber-500/20 to-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/30 shadow-inner animate-pulse">
+            <Sparkles className="w-12 h-12 text-amber-400" />
           </div>
-          <h1 className="text-3xl font-bold mb-2 text-amber-400 tracking-wide">واتس اب الذهبي (Goks Gold)</h1>
-          <p className="text-slate-400 text-sm mb-6">تسجيل الدخول برقم الهاتف لتفعيل النسخة البنكية والأمان</p>
+
+          <h1 className="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 tracking-wide">
+            واتساب الذهبي (Goks Gold)
+          </h1>
+          <p className="text-slate-400 text-xs mb-8 leading-relaxed">
+            النسخة الهندسية المتقدمة والمؤمنة بالكامل - إعداد المهندس يوسف فرج
+          </p>
 
           {!otpSent ? (
-            <div className="space-y-4 text-right">
-              <label className="block text-xs font-medium text-amber-300">رقم الهاتف المحمول</label>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={phoneNumber} 
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="201012345678+"
-                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 text-left dir-ltr"
-                />
+            <div className="space-y-5 text-right">
+              <div>
+                <label className="block text-xs font-bold text-amber-300 mb-2">رقم الهاتف المحمول (مع رمز الدولة)</label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+20 101 234 5678"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-white text-left dir-ltr focus:outline-none focus:border-amber-500 shadow-inner"
+                  />
+                  <Smartphone className="absolute right-4 top-3.5 w-5 h-5 text-slate-500" />
+                </div>
               </div>
+
               <button 
                 onClick={() => {
-                  if(phoneNumber.length < 9) {
-                    showToast('الرجاء إدخال رقم صحيح');
+                  if (phoneNumber.length < 8) {
+                    showToast('الرجاء إدخال رقم هاتف صحيح مع رمز الدولة');
                     return;
                   }
                   const code = Math.floor(1000 + Math.random() * 9000).toString();
                   setOtpCode(code);
                   setOtpSent(true);
-                  showToast(`تم إرسال رمز التحقق إلى رقمك: ${code}`);
+                  showToast(`تم إرسال رمز التحقق بنجاح! الكود التجريبي: ${code}`);
                 }}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition-all"
+                className="w-full bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2"
               >
-                إرسال كود التحقق
+                <span>إرسال كود التحقق الأمني (OTP)</span>
+                <ArrowRight className="w-5 h-5" />
               </button>
             </div>
           ) : (
-            <div className="space-y-4 text-right">
-              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-center text-xs text-amber-300">
-                رمز التحقق التجريبي (OTP): <span className="font-bold text-lg text-white">{otpCode}</span>
+            <div className="space-y-5 text-right">
+              <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-2xl text-center">
+                <span className="text-xs text-amber-300 block mb-1">رمز التحقق الخاص بك (للتجربة السريعة):</span>
+                <span className="font-mono font-bold text-2xl text-white tracking-widest">{otpCode}</span>
               </div>
-              <label className="block text-xs font-medium text-amber-300">ادخل رمز التحقق المكون من 4 أرقام</label>
-              <input 
-                type="text" 
-                maxLength={4}
-                value={enteredOtp} 
-                onChange={(e) => setEnteredOtp(e.target.value)}
-                placeholder="----"
-                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest focus:outline-none focus:border-amber-500"
-              />
+
+              <div>
+                <label className="block text-xs font-bold text-amber-300 mb-2">أدخل كود التحقق المكون من 4 أرقام</label>
+                <input 
+                  type="text" 
+                  maxLength={4}
+                  value={enteredOtp} 
+                  onChange={(e) => setEnteredOtp(e.target.value)}
+                  placeholder="----"
+                  className="w-full bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-white text-center text-3xl tracking-[1em] focus:outline-none focus:border-amber-500 shadow-inner font-mono"
+                />
+              </div>
+
               <button 
                 onClick={() => {
-                  if(enteredOtp === otpCode || enteredOtp === '1234') {
+                  if (enteredOtp === otpCode || enteredOtp === '1234') {
                     setIsLoggedIn(true);
-                    showToast('تم تسجيل الدخول بنجاح! أهلاً بك في واتساب الذهبي');
+                    showToast('مرحباً بك مجدداً في واتساب الذهبي!');
                   } else {
-                    showToast('كود التحقق غير صحيح');
+                    showToast('كود التحقق غير صحيح، جرب 1234');
                   }
                 }}
-                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all"
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black py-4 rounded-2xl shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2"
               >
-                متابعة والدخول للنسخة الذهبية
+                <CheckCircle2 className="w-5 h-5" />
+                <span>تأكيد والدخول للنسخة الذهبية</span>
               </button>
             </div>
           )}
+
+          <div className="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+            <Shield className="w-4 h-4 text-amber-500" />
+            <span>مشفر كلياً • ضد الحظر والتجسس • ميزات يوسف فرج الحصرية</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-white font-sans overflow-hidden">
-      {/* Toast Notification */}
+    <div className="flex flex-col h-screen bg-slate-950 text-white font-sans overflow-hidden select-none">
+      
+      {/* Toast Notification Bar */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-amber-500 text-slate-950 font-bold px-6 py-3 rounded-2xl shadow-2xl border border-amber-300 animate-bounce">
-          {toastMessage}
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold px-6 py-3 rounded-2xl shadow-2xl border border-amber-200 animate-bounce flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Bar with Wi-Fi Toggle & Gold Header */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
+      {/* Top Header Bar */}
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg z-20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-black shadow-lg">
-            G
+          <div 
+            onClick={() => setAccountSwitcherOpen(true)}
+            className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg cursor-pointer hover:scale-105 transition-all relative"
+          >
+            <span className="text-lg">G</span>
+            <span className="absolute -bottom-1 -left-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900"></span>
           </div>
           <div>
-            <h1 className="font-bold text-amber-400 text-lg flex items-center gap-1">
-              واتساب الذهبي <Sparkles className="w-4 h-4 text-amber-400" />
-            </h1>
-            <p className="text-xs text-slate-400">نسخة يوسف فرج المتقدمة</p>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-black text-amber-400 text-base tracking-wide">واتساب الذهبي</h1>
+              <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30">Goks Gold</span>
+            </div>
+            <p className="text-[11px] text-slate-400">الحساب النشط: {accounts.find(a => a.id === activeAccountId)?.name}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* زر قطع الإنترنت الخصائص الذهبية */}
+          {/* Wi-Fi Disconnect/Connect Toggle for WhatsApp Only */}
           <button 
             onClick={() => {
               setIsInternetDisconnected(!isInternetDisconnected);
-              showToast(isInternetDisconnected ? 'تم إعادة اتصال الإنترنت بالواتس' : 'تم قطع الإنترنت عن الواتس فقط بنجاح!');
+              showToast(isInternetDisconnected ? 'تم إعادة اتصال الإنترنت لواتساب بنجاح!' : 'تم قطع الإنترنت عن واتساب فقط بنجاح (وضع عدم الإزعاج)!');
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-              isInternetDisconnected ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shadow-md ${
+              isInternetDisconnected 
+                ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' 
+                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
             }`}
           >
             {isInternetDisconnected ? <WifiOff className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
-            <span>{isInternetDisconnected ? 'مقطوع (الواتس فقط)' : 'متصل (Wi-Fi)'}</span>
+            <span>{isInternetDisconnected ? 'الإنترنت مفصول (عن الواتس)' : 'متصل (Wi-Fi)'}</span>
           </button>
 
-          <button onClick={() => setSpammerOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-amber-400 title='مكرر الرسائل'">
+          <button 
+            onClick={() => setSpammerOpen(true)} 
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-2xl text-amber-400 transition-all shadow-sm"
+            title="أداة مكرر الرسائل السريع"
+          >
             <Copy className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Main Container */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar / Tabs Navigation */}
-        <div className="w-full md:w-96 bg-slate-900/90 border-l border-slate-800 flex flex-col">
-          {/* Tabs header */}
-          <div className="grid grid-cols-4 bg-slate-950/50 p-2 border-b border-slate-800 text-center text-xs font-semibold">
-            <button onClick={() => setActiveTab('chats')} className={`py-2 rounded-lg transition-all ${activeTab === 'chats' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'}`}>الدردشات</button>
-            <button onClick={() => setActiveTab('status')} className={`py-2 rounded-lg transition-all ${activeTab === 'status' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'}`}>الحالات (ساعة)</button>
-            <button onClick={() => setActiveTab('tools')} className={`py-2 rounded-lg transition-all ${activeTab === 'tools' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'}`}>الأدوات</button>
-            <button onClick={() => setActiveTab('settings')} className={`py-2 rounded-lg transition-all ${activeTab === 'settings' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'}`}>الإعدادات</button>
+      {/* Main Workspace Split */}
+      <div className="flex flex-1 overflow-hidden relative">
+        
+        {/* Sidebar Navigation & Tabs */}
+        <div className="w-full md:w-96 bg-slate-900/90 border-l border-slate-800 flex flex-col z-10">
+          
+          {/* Navigation Tabs Header */}
+          <div className="grid grid-cols-4 bg-slate-950/70 p-2 border-b border-slate-800 text-center text-xs font-bold gap-1">
+            <button 
+              onClick={() => setActiveTab('chats')} 
+              className={`py-2.5 rounded-xl transition-all flex flex-col items-center gap-1 ${activeTab === 'chats' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-inner' : 'text-slate-400 hover:text-white'}`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>الدردشات</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('status')} 
+              className={`py-2.5 rounded-xl transition-all flex flex-col items-center gap-1 ${activeTab === 'status' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-inner' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Radio className="w-4 h-4" />
+              <span>الحالات (ساعة)</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('tools')} 
+              className={`py-2.5 rounded-xl transition-all flex flex-col items-center gap-1 ${activeTab === 'tools' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-inner' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>الأدوات</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('settings')} 
+              className={`py-2.5 rounded-xl transition-all flex flex-col items-center gap-1 ${activeTab === 'settings' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-inner' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>الإعدادات</span>
+            </button>
           </div>
 
-          {/* Tab Content */}
+          {/* Tab Contents */}
           <div className="flex-1 overflow-y-auto">
+            
+            {/* 1. Chats Tab */}
             {activeTab === 'chats' && (
               <div className="divide-y divide-slate-800/60">
+                <div className="p-3 bg-slate-950/40">
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="بحث في المحادثات أو الأرقام..."
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-white pl-9 focus:outline-none focus:border-amber-500"
+                    />
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                  </div>
+                </div>
+
                 {chats.map(chat => (
                   <div 
                     key={chat.id} 
                     onClick={() => setActiveChatId(chat.id)}
-                    className={`flex items-center gap-3 p-3 hover:bg-slate-800/40 cursor-pointer transition-all ${activeChatId === chat.id ? 'bg-slate-800/70 border-r-4 border-amber-500' : ''}`}
+                    className={`flex items-center gap-3.5 p-3.5 hover:bg-slate-800/40 cursor-pointer transition-all ${activeChatId === chat.id ? 'bg-slate-800/80 border-r-4 border-amber-500 shadow-inner' : ''}`}
                   >
                     <div className="relative">
-                      <img src={chat.avatar} alt={chat.name} className="w-12 h-12 rounded-full object-cover border border-slate-700" />
+                      <img src={chat.avatar} alt={chat.name} className="w-13 h-13 rounded-2xl object-cover border border-slate-700 shadow-md" />
                       {chat.online && <span className="absolute bottom-0 left-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-1">
-                        <h3 className="font-semibold text-white truncate">{chat.name}</h3>
-                        <span className="text-[10px] text-slate-400">{chat.time}</span>
+                        <h3 className="font-bold text-white text-sm truncate">{chat.name}</h3>
+                        <span className="text-[10px] text-slate-400 font-mono">{chat.time}</span>
                       </div>
                       <p className="text-xs text-slate-400 truncate">{chat.lastMessage}</p>
                     </div>
                     {chat.unread > 0 && (
-                      <span className="w-5 h-5 bg-amber-500 text-slate-950 font-bold rounded-full text-xs flex items-center justify-center">
+                      <span className="w-5.5 h-5.5 bg-amber-500 text-slate-950 font-black rounded-full text-[11px] flex items-center justify-center shadow-md">
                         {chat.unread}
                       </span>
                     )}
@@ -222,29 +397,46 @@ export default function App() {
               </div>
             )}
 
+            {/* 2. Status Tab (1-Hour Mode) */}
             {activeTab === 'status' && (
               <div className="p-4 space-y-4">
-                <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-xs text-amber-300">
-                  ✨ ميزة رفع مدة الحالة إلى ساعة كاملة مفعلة تلقائياً في نسختك الذهبية!
+                <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/30 p-4 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <h3 className="font-bold text-amber-300 text-sm">حالة الساعة الواحدة مفعلة</h3>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    يمكنك الآن رفع حالات تصل مدتها إلى 60 دقيقة كاملة، مع تفعيل خاصية المشاهدة السرية (لن يظهر اسمك عند مشاهدة حالات الآخرين).
+                  </p>
                 </div>
-                <h3 className="text-sm font-bold text-slate-300">حالات الأصدقاء (مشاهدة بدون علم صاحبها)</h3>
+
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">حالات الأصدقاء المتاحة</h3>
+                
                 <div className="space-y-3">
                   {statuses.map(st => (
-                    <div key={st.id} className="flex items-center justify-between bg-slate-900 border border-slate-800 p-3 rounded-xl">
+                    <div key={st.id} className="flex items-center justify-between bg-slate-900 border border-slate-800 p-3.5 rounded-2xl shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full border-2 border-amber-500 p-0.5">
-                          <img src={st.image} className="w-full h-full rounded-full object-cover" />
+                        <div className="w-14 h-14 rounded-2xl border-2 border-amber-500 p-0.5 shadow-md">
+                          <img src={st.image} className="w-full h-full rounded-xl object-cover" />
                         </div>
                         <div>
                           <p className="font-bold text-white text-sm">{st.name}</p>
-                          <p className="text-xs text-slate-400">{st.time} (حالة ساعة)</p>
+                          <p className="text-[11px] text-amber-400/90 font-medium">{st.time}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => setViewingStatus(st)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-amber-400" title="مشاهدة سرية">
+                        <button 
+                          onClick={() => setViewingStatus(st)} 
+                          className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-amber-400 shadow-sm transition-all"
+                          title="مشاهدة سرية"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button onClick={() => showToast('تم تنزيل الحالة إلى الاستوديو بنجاح!')} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-emerald-400" title="حفظ للاستوديو">
+                        <button 
+                          onClick={() => showToast('تم تنزيل الحالة بنجاح إلى مجلد واتساب الذهبي في الاستوديو!')} 
+                          className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-emerald-400 shadow-sm transition-all"
+                          title="حفظ الحالة"
+                        >
                           <Download className="w-4 h-4" />
                         </button>
                       </div>
@@ -254,68 +446,152 @@ export default function App() {
               </div>
             )}
 
+            {/* 3. Tools Tab */}
             {activeTab === 'tools' && (
               <div className="p-4 space-y-3">
-                <h3 className="text-sm font-bold text-amber-400 mb-2">أدوات واتساب الذهبي الاحترافية</h3>
-                <button onClick={() => setSpammerOpen(true)} className="w-full bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-3.5 rounded-xl flex items-center justify-between transition-all">
-                  <div className="flex items-center gap-3">
-                    <Copy className="w-5 h-5 text-amber-400" />
+                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">أدوات المطور يوسف فرج الذهبية</h3>
+                
+                <button 
+                  onClick={() => setSpammerOpen(true)} 
+                  className="w-full bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-4 rounded-2xl flex items-center justify-between transition-all group shadow-sm"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-all">
+                      <Copy className="w-5 h-5" />
+                    </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm text-white">مكرر الرسائل السريع</p>
-                      <p className="text-xs text-slate-400">إرسال الكلمة أو الجملة مئات المرات بضغطة</p>
+                      <p className="font-bold text-sm text-white">مكرر الرسائل السريع (Spammer)</p>
+                      <p className="text-xs text-slate-400">إرسال الجمل مئات المرات بضغطة زر واحدة</p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500" />
+                  <ChevronRight className="w-5 h-5 text-slate-500" />
+                </button>
+
+                <button 
+                  onClick={() => showToast('تم تفعيل وضع منع الحظر الشامل بنجاح')} 
+                  className="w-full bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-4 rounded-2xl flex items-center justify-between transition-all group shadow-sm"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-all">
+                      <ShieldAlert className="w-5 h-5" />
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sm text-white">درع الحماية الشامل ضد الحظر</p>
+                      <p className="text-xs text-slate-400">حماية الأرقام والرسائل من الحظر المؤقت والدائم</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-500" />
                 </button>
               </div>
             )}
 
+            {/* 4. Settings Tab (Gold Privacy) */}
             {activeTab === 'settings' && (
               <div className="p-4 space-y-4">
-                <h3 className="text-sm font-bold text-amber-400">إضافات الذهبي والخصوصية الكاملة</h3>
-                <div className="space-y-3 bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">إخفاء ظهور "متصل الآن"</span>
-                    <input type="checkbox" checked={goldSettings.hideLastSeen} onChange={(e)=>setGoldSettings({...goldSettings, hideLastSeen: e.target.checked})} className="accent-amber-500 w-4 h-4" />
+                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider">إعدادات الخصوصية والذهبي الكاملة</h3>
+                
+                <div className="space-y-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-sm">
+                  
+                  <div className="flex items-center justify-between py-1.5 border-b border-slate-800/80">
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 block">إخفاء الظهور (آخر ظهور)</span>
+                      <span className="text-[11px] text-slate-400">لن يرى أحدهم وقت دخولك أبداً</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={goldSettings.hideLastSeen} 
+                      onChange={(e) => setGoldSettings({...goldSettings, hideLastSeen: e.target.checked})} 
+                      className="accent-amber-500 w-5 h-5 cursor-pointer" 
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">منع حذف الرسائل (لا تستطيع الحذف من عندك)</span>
-                    <input type="checkbox" checked={goldSettings.antiDeleteMessage} onChange={(e)=>setGoldSettings({...goldSettings, antiDeleteMessage: e.target.checked})} className="accent-amber-500 w-4 h-4" />
+
+                  <div className="flex items-center justify-between py-1.5 border-b border-slate-800/80">
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 block">منع حذف الرسائل (Anti-Delete)</span>
+                      <span className="text-[11px] text-slate-400">ترى الرسائل حتى بعد أن يحذفها الطرف الآخر</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={goldSettings.antiDeleteMessage} 
+                      onChange={(e) => setGoldSettings({...goldSettings, antiDeleteMessage: e.target.checked})} 
+                      className="accent-amber-500 w-5 h-5 cursor-pointer" 
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">منع حذف الحالات</span>
-                    <input type="checkbox" checked={goldSettings.antiDeleteStatus} onChange={(e)=>setGoldSettings({...goldSettings, antiDeleteStatus: e.target.checked})} className="accent-amber-500 w-4 h-4" />
+
+                  <div className="flex items-center justify-between py-1.5 border-b border-slate-800/80">
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 block">منع حذف الحالات</span>
+                      <span className="text-[11px] text-slate-400">الاحتفاظ بالحالات المحذوفة تلقائياً</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={goldSettings.antiDeleteStatus} 
+                      onChange={(e) => setGoldSettings({...goldSettings, antiDeleteStatus: e.target.checked})} 
+                      className="accent-amber-500 w-5 h-5 cursor-pointer" 
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">إخفاء صحين القراءة والاستلام</span>
-                    <input type="checkbox" checked={goldSettings.hideBlueTicks} onChange={(e)=>setGoldSettings({...goldSettings, hideBlueTicks: e.target.checked})} className="accent-amber-500 w-4 h-4" />
+
+                  <div className="flex items-center justify-between py-1.5 border-b border-slate-800/80">
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 block">إخفاء صحين القراءة الأزرق</span>
+                      <span className="text-[11px] text-slate-400">لا تظهر علامة القراءة إلا عند الرد</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={goldSettings.hideBlueTicks} 
+                      onChange={(e) => setGoldSettings({...goldSettings, hideBlueTicks: e.target.checked})} 
+                      className="accent-amber-500 w-5 h-5 cursor-pointer" 
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">إرسال الصور بجودة أصلية (بدون ضغط)</span>
-                    <input type="checkbox" checked={goldSettings.highQualityImages} onChange={(e)=>setGoldSettings({...goldSettings, highQualityImages: e.target.checked})} className="accent-amber-500 w-4 h-4" />
+
+                  <div className="flex items-center justify-between py-1.5">
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 block">إرسال الصور بجودة أصلية كاملة</span>
+                      <span className="text-[11px] text-slate-400">إلغاء ضغط واتساب الافتراضي للصور</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={goldSettings.highQualityImages} 
+                      onChange={(e) => setGoldSettings({...goldSettings, highQualityImages: e.target.checked})} 
+                      className="accent-amber-500 w-5 h-5 cursor-pointer" 
+                    />
                   </div>
+
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Main Chat Area */}
-        <div className="hidden md:flex flex-1 flex-col bg-slate-950 relative">
+        {/* Main Active Chat Area */}
+        <div className="hidden md:flex flex-1 flex-col bg-slate-950 relative overflow-hidden">
+          
           {activeChatId ? (
             <>
               {/* Chat Header */}
-              <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={chats.find(c=>c.id === activeChatId)?.avatar} className="w-10 h-10 rounded-full border border-slate-700 object-cover" />
+              <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-10 shadow-md">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative">
+                    <img src={chats.find(c => c.id === activeChatId)?.avatar} className="w-11 h-11 rounded-2xl border border-slate-700 object-cover shadow-sm" />
+                    <span className="absolute bottom-0 left-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900"></span>
+                  </div>
                   <div>
-                    <h3 className="font-bold text-white text-sm">{chats.find(c=>c.id === activeChatId)?.name}</h3>
-                    <p className="text-[10px] text-emerald-400">متصل الآن (محمي بالذهبي)</p>
+                    <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                      <span>{chats.find(c => c.id === activeChatId)?.name}</span>
+                      <Shield className="w-3.5 h-3.5 text-amber-400" />
+                    </h3>
+                    <p className="text-[11px] text-emerald-400 font-medium">متصل الآن (محمي بالنسخة الذهبية)</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-slate-400">
-                  <Phone className="w-5 h-5 hover:text-amber-400 cursor-pointer" />
-                  <Video className="w-5 h-5 hover:text-amber-400 cursor-pointer" />
+
+                <div className="flex items-center gap-5 text-slate-300">
+                  <button onClick={() => setActiveCall('audio')} className="p-2 hover:bg-slate-800 rounded-xl transition-all text-amber-400">
+                    <Phone className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => setActiveCall('video')} className="p-2 hover:bg-slate-800 rounded-xl transition-all text-amber-400">
+                    <Video className="w-5 h-5" />
+                  </button>
                   <MoreVertical className="w-5 h-5 hover:text-amber-400 cursor-pointer" />
                 </div>
               </div>
@@ -323,34 +599,48 @@ export default function App() {
               {/* Messages Body */}
               <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
                 <div className="flex justify-center">
-                  <span className="bg-slate-900 text-slate-400 text-[10px] px-3 py-1 rounded-full border border-slate-800">
-                    الرسائل مشفرة كلياً ومحمية بإضافات يوسف فرج الذهبية
+                  <span className="bg-slate-900/90 text-amber-400 text-[11px] px-4 py-1.5 rounded-2xl border border-amber-500/30 shadow-md flex items-center gap-1.5 font-medium">
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
+                    الرسائل والمكالمات مشفرة تماماً بنظام يوسف فرج الذهبي
                   </span>
                 </div>
-                <div className="flex justify-start">
-                  <div className="bg-slate-900 border border-slate-800 text-slate-200 p-3 rounded-2xl max-w-md text-sm">
-                    السلام عليكم يا باشمهندس.. أخبار الشغل تمام؟
-                    <span className="block text-[9px] text-slate-500 text-left mt-1">03:10 م</span>
+
+                {(messages[activeChatId] || []).map(msg => (
+                  <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-md p-3.5 rounded-2xl text-sm shadow-md relative ${
+                      msg.sender === 'me' 
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-medium rounded-bl-none' 
+                        : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-br-none'
+                    }`}>
+                      <p className="leading-relaxed">{msg.text}</p>
+                      <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${msg.sender === 'me' ? 'text-slate-950/80' : 'text-slate-500'}`}>
+                        <span>{msg.time}</span>
+                        {msg.sender === 'me' && <CheckCheck className="w-3.5 h-3.5 text-slate-950" />}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
 
               {/* Message Input Bar */}
-              <div className="bg-slate-900 border-t border-slate-800 p-4 flex items-center gap-3">
+              <div className="bg-slate-900 border-t border-slate-800 p-4 flex items-center gap-3 z-10 shadow-lg">
+                <button onClick={() => showToast('تم إرفاق الملف بجودة أصلية 100%')} className="p-2.5 text-slate-400 hover:text-amber-400 transition-all">
+                  <Paperclip className="w-5 h-5" />
+                </button>
+                <button onClick={() => showToast('تم إرفاق الصورة الأصلية')} className="p-2.5 text-slate-400 hover:text-amber-400 transition-all">
+                  <ImageIcon className="w-5 h-5" />
+                </button>
                 <input 
                   type="text" 
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="اكتب رسالتك هنا..."
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 shadow-inner"
                 />
                 <button 
-                  onClick={() => {
-                    if(!messageInput.trim()) return;
-                    showToast('تم إرسال الرسالة بجودة أصلية');
-                    setMessageInput('');
-                  }} 
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 p-3 rounded-xl transition-all shadow-lg font-bold"
+                  onClick={handleSendMessage}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 p-3.5 rounded-2xl transition-all shadow-lg font-black"
                 >
                   <Send className="w-5 h-5" />
                 </button>
@@ -358,84 +648,164 @@ export default function App() {
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500">
-              <Sparkles className="w-16 h-16 text-amber-500/20 mb-4 animate-pulse" />
+              <Sparkles className="w-20 h-20 text-amber-500/20 mb-4 animate-pulse" />
               <h2 className="text-xl font-bold text-slate-300">أهلاً بك في واتساب الذهبي (Goks Gold)</h2>
-              <p className="text-sm mt-1 max-w-sm">اختر محادثة من القائمة الجانبية للبدء، أو تصفح الأدوات والإعدادات المتطورة.</p>
+              <p className="text-sm mt-1 max-w-sm">اختر محادثة من القائمة الجانبية للبدء، أو استمتع بالميزات الحصرية.</p>
             </div>
           )}
+
         </div>
       </div>
 
       {/* Spammer Modal */}
       {spammerOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-amber-500/30 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
-            <button onClick={() => setSpammerOpen(false)} className="absolute top-4 left-4 text-slate-400 hover:text-white">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/40 w-full max-w-md p-6 rounded-3xl shadow-2xl relative">
+            <button onClick={() => setSpammerOpen(false)} className="absolute top-5 left-5 text-slate-400 hover:text-white">
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
-              <Copy className="w-5 h-5" /> أداة مكرر الرسائل السريع
+              <Copy className="w-5 h-5 text-amber-400" />
+              <span>أداة مكرر الرسائل السريع</span>
             </h3>
             <div className="space-y-4 text-right">
               <div>
-                <label className="block text-xs text-slate-300 mb-1">الكلمة أو الجملة المراد تكرارها</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">الكلمة أو الجملة المراد تكرارها</label>
                 <input 
                   type="text" 
                   value={spamText} 
                   onChange={(e) => setSpamText(e.target.value)} 
-                  placeholder="اكتب الجملة هنا..." 
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  placeholder="مثال: السلام عليكم.." 
+                  className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-300 mb-1">عدد مرات التكرار</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">عدد مرات التكرار</label>
                 <input 
                   type="number" 
                   value={spamCount} 
                   onChange={(e) => setSpamCount(Number(e.target.value))} 
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500"
                 />
               </div>
               <button 
                 onClick={() => {
-                  if(!spamText) {
+                  if (!spamText) {
                     showToast('الرجاء كتابة الجملة أولاً');
                     return;
                   }
-                  showToast(`تم إرسال الجملة مكررة (${spamCount} مرة) بنجاح!`);
+                  showToast(`تم إرسال التكرار (${spamCount} مرة) في المحادثة بنجاح!`);
                   setSpammerOpen(false);
                 }}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition-all"
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black py-3.5 rounded-2xl shadow-xl transition-all"
               >
-                إرسال التكرار فوراً
+                تنفيذ الإرسال السريع
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Account Switcher Modal */}
+      {accountSwitcherOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/40 w-full max-w-md p-6 rounded-3xl shadow-2xl relative">
+            <button onClick={() => setAccountSwitcherOpen(false)} className="absolute top-5 left-5 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-amber-400" />
+              <span>إدارة الحسابات المتعددة (حتى 5 أرقام)</span>
+            </h3>
+            <div className="space-y-3 mb-4">
+              {accounts.map(acc => (
+                <div 
+                  key={acc.id} 
+                  onClick={() => {
+                    setActiveAccountId(acc.id);
+                    setAccountSwitcherOpen(false);
+                    showToast(`تم التبديل إلى حساب: ${acc.name}`);
+                  }}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    activeAccountId === acc.id ? 'bg-amber-500/10 border-amber-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <img src={acc.avatar} className="w-10 h-10 rounded-xl object-cover border border-slate-700" />
+                    <div>
+                      <p className="font-bold text-sm text-white">{acc.name}</p>
+                      <p className="text-xs text-slate-400">{acc.phone}</p>
+                    </div>
+                  </div>
+                  {activeAccountId === acc.id && <CheckCircle2 className="w-5 h-5 text-amber-400" />}
+                </div>
+              ))}
+            </div>
+            <button 
+              onClick={() => {
+                if(accounts.length >= 5) {
+                  showToast('عذراً، الحد الأقصى 5 حسابات مفعلة');
+                  return;
+                }
+                const newId = accounts.length + 1;
+                setAccounts([...accounts, { id: newId, name: `حساب جديد ${newId}`, phone: `+2010000000${newId}`, active: false, avatar: `https://placeholder.co/150/3b82f6/ffffff?text=U${newId}` }]);
+                showToast('تمت إضافة الحساب الجديد بنجاح');
+              }}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-3 rounded-2xl border border-amber-500/30 flex items-center justify-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>إضافة رقم هاتف جديد</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Call Modal */}
+      {activeCall && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-28 h-28 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center mb-6 shadow-2xl animate-pulse">
+            {activeCall === 'audio' ? <Phone className="w-12 h-12 text-amber-400" /> : <Video className="w-12 h-12 text-amber-400" />}
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">جاري {activeCall === 'audio' ? 'المكالمة الصوتية' : 'مكالمة الفيديو'}...</h2>
+          <p className="text-amber-400 font-mono text-lg mb-8">
+            {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}
+          </p>
+          <button 
+            onClick={() => setActiveCall(null)}
+            className="bg-red-600 hover:bg-red-700 text-white font-black px-8 py-4 rounded-2xl shadow-xl transition-all transform active:scale-95"
+          >
+            إنهاء المكالمة
+          </button>
+        </div>
+      )}
+
       {/* Status Viewer Modal */}
       {viewingStatus && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-          <button onClick={() => setViewingStatus(null)} className="absolute top-6 left-6 text-white bg-slate-800/80 p-2 rounded-full">
+        <div className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4">
+          <button onClick={() => setViewingStatus(null)} className="absolute top-6 left-6 text-white bg-slate-800/80 p-3 rounded-full hover:bg-slate-700 transition-all">
             <X className="w-6 h-6" />
           </button>
-          <div className="max-w-md w-full bg-slate-900 border border-amber-500/30 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-3 bg-slate-950 flex items-center justify-between border-b border-slate-800">
+          <div className="max-w-md w-full bg-slate-900 border border-amber-500/30 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-4 bg-slate-950 flex items-center justify-between border-b border-slate-800">
               <span className="font-bold text-amber-400 text-sm">{viewingStatus.name}</span>
-              <span className="text-xs text-slate-400">مشاهدة سرية نشطة 👁️</span>
+              <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">مشاهدة سرية مفعلة 👁️</span>
             </div>
             <div className="h-96 bg-slate-900 flex items-center justify-center p-4">
-              <p className="text-slate-400 text-center text-sm">معاينة الحالة (حالة ساعة كاملة)</p>
+              <img src={viewingStatus.image} className="max-h-full rounded-xl object-contain shadow-md" />
             </div>
             <div className="p-4 bg-slate-950 flex justify-end">
-              <button onClick={() => showToast('تم حفظ الحالة في الاستوديو بنجاح')} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
-                <Download className="w-4 h-4" /> حفظ للاستوديو
+              <button 
+                onClick={() => showToast('تم حفظ الحالة في الاستوديو بنجاح')} 
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-lg transition-all"
+              >
+                <Download className="w-4 h-4" />
+                <span>حفظ الحالة للاستوديو</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
